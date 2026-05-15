@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume & LinkedIn Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0f172a;
+    --navy2: #1e293b;
+    --navy3: #334155;
+    --slate: #64748b;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --surface: #f8fafc;
+    --white: #ffffff;
+    --coral: #f97316;
+    --coral2: #ea580c;
+    --teal: #0d9488;
+    --green: #10b981;
+    --purple: #7c3aed;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.75rem;
+    background: var(--coral);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 72px);
+  }
+
+  .sidebar {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 2rem;
+    overflow-y: auto;
+    height: calc(100vh - 72px);
+    position: sticky;
+    top: 0;
+  }
+
+  .output-panel {
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 1rem;
+    margin-top: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field { margin-bottom: 0.85rem; }
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--navy3);
+    margin-bottom: 5px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--navy);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+    background: #fff;
+  }
+  .field textarea { min-height: 80px; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn-generate {
+    width: 100%;
+    padding: 14px;
+    margin-top: 1.5rem;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+  .btn-generate:hover { background: var(--navy2); }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-generate .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .btn-generate.loading .spinner { display: block; }
+  .btn-generate.loading .btn-text { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .tab {
+    padding: 10px 20px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--slate);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--navy); border-bottom-color: var(--coral); }
+  .tab:hover:not(.active) { color: var(--navy3); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    gap: 1rem;
+  }
+  .empty-icon {
+    width: 72px; height: 72px;
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+  }
+  .empty-state h3 { font-size: 1rem; font-weight: 500; color: var(--navy3); }
+  .empty-state p { font-size: 0.85rem; max-width: 280px; line-height: 1.6; }
+
+  .resume-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .resume-header-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .resume-header-headline {
+    font-size: 1rem;
+    color: var(--coral);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .resume-contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: var(--slate);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--navy);
+  }
+  .resume-contact-row span { display: flex; align-items: center; gap: 5px; }
+
+  .resume-section { margin-top: 1.25rem; }
+  .resume-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--navy);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 0.75rem;
+  }
+  .resume-section p {
+    font-size: 0.88rem;
+    color: var(--navy3);
+    line-height: 1.7;
+  }
+  .skill-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--navy3);
+    font-weight: 400;
+  }
+
+  .li-section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .li-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 0.75rem;
+  }
+  .li-icon {
+    width: 36px; height: 36px; min-width: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .li-section h3 { font-size: 0.92rem; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .li-status {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .status-missing { background: #fef2f2; color: #b91c1c; }
+  .status-improve { background: #fffbeb; color: #92400e; }
+  .status-good { background: #f0fdf4; color: #166534; }
+
+  .li-tips { list-style: none; }
+  .li-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--navy3);
+    line-height: 1.55;
+  }
+  .li-tip:last-child { border-bottom: none; }
+  .tip-dot {
+    width: 6px; height: 6px; min-width: 6px;
+    border-radius: 50%;
+    background: var(--coral);
+    margin-top: 7px;
+  }
+
+  .score-ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: var(--navy);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+  .score-ring {
+    position: relative;
+    width: 64px; height: 64px;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .score-label { font-size: 1rem; font-weight: 600; }
+  .score-sub { font-size: 0.8rem; opacity: 0.7; margin-top: 3px; }
+
+  .copy-btn {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--navy3);
+    transition: background 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .copy-btn:hover { background: var(--border); }
+
+  .stream-text { white-space: pre-wrap; font-size: 0.88rem; color: var(--navy3); line-height: 1.7; }
+  .pulse { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .cursor::after { content: '▋'; animation: blink 0.7s step-end infinite; color: var(--coral); }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .sidebar { height: auto; position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Resume & LinkedIn Builder</h1>
+  <span>AI-Powered</span>
+</header>
+
+<div class="main-grid">
+  <aside class="sidebar">
+    <div class="section-title">Personal Info</div>
+    <div class="field">
+      <label>Full Name *</label>
+      <input type="text" id="name" placeholder="Priya Sharma" />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="email" placeholder="priya@email.com" />
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="text" id="phone" placeholder="+91 98XXX XXXXX" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="location" placeholder="Bengaluru, India" />
+      </div>
+      <div class="field">
+        <label>LinkedIn URL</label>
+        <input type="text" id="linkedin" placeholder="linkedin.com/in/priya" />
+      </div>
+    </div>
+
+    <div class="section-title">Professional</div>
+    <div class="field">
+      <label>Job Title / Headline</label>
+      <input type="text" id="headline" placeholder="Full-Stack Engineer | React · Node.js" />
+    </div>
+    <div class="field">
+      <label>Professional Summary</label>
+      <textarea id="summary" placeholder="Brief overview of your background and strengths…"></textarea>
+    </div>
+    <div class="field">
+      <label>Skills</label>
+      <textarea id="skills" placeholder="React, TypeScript, Python, AWS, Figma, Agile…" style="min-height: 60px;"></textarea>
+    </div>
+
+    <div class="section-title">Experience</div>
+    <div class="field">
+      <label>Work Experience</label>
+      <textarea id="experience" placeholder="Company — Role (Year–Year)&#10;Key achievements and responsibilities…&#10;&#10;Company 2 — Role…" style="min-height: 100px;"></textarea>
+    </div>
+
+    <div class="section-title">Education & More</div>
+    <div class="field">
+      <label>Education</label>
+      <textarea id="education" placeholder="B.Tech Computer Science, IIT Bengaluru, 2022" style="min-height: 60px;"></textarea>
+    </div>
+    <div class="field">
+      <label>Projects</label>
+      <textarea id="projects" placeholder="Project name — Description, tech used, impact…"></textarea>
+    </div>
+    <div class="field">
+      <label>Certifications / Awards</label>
+      <textarea id="certs" placeholder="AWS Certified Solutions Architect, 2023…" style="min-height: 60px;"></textarea>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generate()">
+      <div class="spinner"></div>
+      <span class="btn-text">✦ Generate Resume & LinkedIn Tips</span>
+    </button>
+  </aside>
+
+  <main class="output-panel">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('resume', this)">📄 Resume Preview</div>
+      <div class="tab" onclick="switchTab('linkedin', this)">💼 LinkedIn Improvements</div>
+    </div>
+
+    <div id="tab-resume" class="tab-content active">
+      <div class="empty-state" id="resume-empty">
+        <div class="empty-icon">📄</div>
+        <h3>Your resume will appear here</h3>
+        <p>Fill in the form and click Generate to create a professional, AI-optimized resume.</p>
+      </div>
+      <div id="resume-output" style="display:none;"></div>
+    </div>
+
+    <div id="tab-linkedin" class="tab-content">
+      <div class="empty-state" id="linkedin-empty">
+        <div class="empty-icon">💼</div>
+        <h3>LinkedIn tips will appear here</h3>
+        <p>Get personalized suggestions on how to improve each section of your LinkedIn profile.</p>
+      </div>
+      <div id="linkedin-output" style="display:none;"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+function getData() {
+  return {
+    name: val('name'), email: val('email'), phone: val('phone'),
+    location: val('location'), linkedin: val('linkedin'),
+    headline: val('headline'), summary: val('summary'),
+    skills: val('skills'), experience: val('experience'),
+    education: val('education'), projects: val('projects'), certs: val('certs')
+  };
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatExperience(text) {
+  if (!text) return '';
+  const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  return blocks.map(block => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    const title = escapeHtml(lines[0]);
+    const bullets = lines.slice(1).map(line => escapeHtml(line.replace(/^[-*]\s*/, ''))).filter(Boolean);
+    const content = bullets.length
+      ? `<ul class='exp-bullets'>${bullets.map(b => `<li>${b}</li>`).join('')}</ul>`
+      : lines.slice(1).map(line => `<p>${escapeHtml(line)}</p>`).join('');
+    return `<div class='exp-entry'><p class='exp-title'>${title}</p>${content}</div>`;
+  }).join('');
+}
+
+function localGenerate(d) {
+  const skills = d.skills ? d.skills.split(/,|\n/).map(s => s.trim()).filter(Boolean) : [];
+  const headline = d.headline || [d.jobTitle, skills.slice(0, 3).join(' · ')].filter(Boolean).join(' | ') || `${d.name} | Professional`;
+  const summary = d.summary || `Experienced ${headline.toLowerCase()} with a strong mix of ${skills.slice(0, 5).join(', ')}. Proven ability to deliver results through practical problem solving, collaboration, and continuous learning.`;
+  const expHtml = formatExperience(d.experience);
+  const scoreFactors = [d.headline, d.summary, d.experience, d.skills, d.linkedin, d.education, d.projects, d.certs].reduce((sum, field) => sum + (field ? 12 : 0), 0);
+  const score = Math.min(100, Math.max(20, scoreFactors));
+  const scoreLabel = score >= 70 ? 'Strong' : score >= 50 ? 'Good' : 'Needs Work';
+
+  const statusFor = field => field ? (field === d.linkedin ? 'good' : 'improve') : 'missing';
+
+  const sections = [
+    { title: 'Profile Photo', icon: '📸', status: 'missing', tips: ['Add a professional headshot with a clean background.', 'Make sure your face fills most of the frame and you appear approachable.'] },
+    { title: 'Headline', icon: '✏️', status: d.headline ? 'good' : 'missing', tips: d.headline ? ['Keep your headline concise and keyword-rich for your target role.', 'Use role-specific skills to improve search visibility.'] : ['Write a clear professional headline that includes your role and key strengths.', 'Include your primary specialization and one top skill.'] },
+    { title: 'About / Summary', icon: '📝', status: d.summary ? 'good' : 'missing', tips: d.summary ? ['Keep your summary results-focused and reader-friendly.', 'Highlight your strongest achievements and the value you deliver.'] : ['Write a short summary that highlights your experience, strengths, and career goals.', 'Include quantifiable outcomes or impact when possible.'] },
+    { title: 'Experience', icon: '💼', status: d.experience ? 'good' : 'missing', tips: d.experience ? ['Use achievement-focused bullet points for each role.', 'Include metrics to show the impact of your work.'] : ['Add your most recent role and key responsibilities.', 'Describe the results you delivered in each position.'] },
+    { title: 'Skills & Endorsements', icon: '⭐', status: d.skills ? 'improve' : 'missing', tips: d.skills ? ['List 5-10 core skills that match your target job.', 'Keep your skills section focused on strengths and in-demand tools.'] : ['Add key technical and professional skills to your profile.', 'Include skills that align with your desired role and industry.'] },
+    { title: 'Recommendations', icon: '🤝', status: 'missing', tips: ['Ask a former manager or teammate for a recommendation.', 'Request a recommendation that highlights your collaboration and impact.'] },
+    { title: 'Featured Section', icon: '🌟', status: 'missing', tips: ['Add a project, article, or accomplishment to your Featured section.', 'Choose items that demonstrate your best work and results.'] },
+    { title: 'Custom LinkedIn URL', icon: '🔗', status: d.linkedin ? 'good' : 'missing', tips: d.linkedin ? ['Your LinkedIn URL looks good.', 'Use the custom URL on your resume and LinkedIn profile.'] : ['Create a custom LinkedIn URL for a polished profile.', 'Use your name or professional brand in the URL.'] }
+  ];
+
+  return {
+    resume: {
+      headline,
+      summary,
+      skills,
+      experienceHtml: expHtml,
+      educationText: d.education || '',
+      projectsText: d.projects || '',
+      certsText: d.certs || ''
+    },
+    linkedin: {
+      score,
+      scoreLabel,
+      sections
+    }
+  };
+}
+
+async function generate() {
+  const d = getData();
+  if (!d.name || !d.email) {
+    alert('Please enter at least your Full Name and Email.');
+    return;
+  }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent = 'Generating…';
+
+  document.getElementById('resume-empty').style.display = 'none';
+  document.getElementById('linkedin-empty').style.display = 'none';
+  document.getElementById('resume-output').style.display = 'block';
+  document.getElementById('linkedin-output').style.display = 'block';
+
+  document.getElementById('resume-output').innerHTML = `
+    <div class="resume-card">
+      <div style="text-align:center; padding: 2rem; color: var(--slate);">
+        <div class="pulse" style="font-size: 2rem; margin-bottom: 1rem;">✦</div>
+        <p>Building your resume…</p>
+      </div>
+    </div>`;
+  document.getElementById('linkedin-output').innerHTML = `
+    <div class="li-section">
+      <div style="text-align:center; padding: 2rem; color: var(--slate);">
+        <div class="pulse" style="font-size: 2rem; margin-bottom: 1rem;">💼</div>
+        <p>Analysing LinkedIn profile…</p>
+      </div>
+    </div>`;
+
+  try {
+    const parsed = localGenerate(d);
+    renderResume(d, parsed.resume);
+    renderLinkedIn(parsed.linkedin);
+  } catch (err) {
+    document.getElementById('resume-output').innerHTML = `<div class="resume-card"><p style="color:red">Error: ${escapeHtml(err.message || 'Something went wrong')}</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-text').textContent = '✦ Generate Resume & LinkedIn Tips';
+  }
+}
+
+function renderResume(d, r) {
+  const skills = r.skills || (d.skills ? d.skills.split(',').map(s=>s.trim()) : []);
+  const html = `
+    <div class="resume-card" id="resume-card">
+      <button class="copy-btn" onclick="copyResume()">Copy Text</button>
+      <p class="resume-header-name">${escapeHtml(d.name)}</p>
+      <p class="resume-header-headline">${escapeHtml(r.headline)}</p>
+      <div class="resume-contact-row">
+        ${d.email ? `<span>✉ ${escapeHtml(d.email)}</span>` : ''}
+        ${d.phone ? `<span>📞 ${escapeHtml(d.phone)}</span>` : ''}
+        ${d.location ? `<span>📍 ${escapeHtml(d.location)}</span>` : ''}
+        ${d.linkedin ? `<span>🔗 ${escapeHtml(d.linkedin)}</span>` : ''}
+      </div>
+      ${r.summary ? `<div class="resume-section">
+        <p class="resume-section-title">Professional Summary</p>
+        <p>${escapeHtml(r.summary)}</p>
+      </div>` : ''}
+      ${skills.length ? `<div class="resume-section">
+        <p class="resume-section-title">Skills</p>
+        <div class="skill-pills">${skills.map(s=>`<span class="skill-pill">${escapeHtml(s)}</span>`).join('')}</div>
+      </div>` : ''}
+      ${r.experienceHtml || d.experience ? `<div class="resume-section">
+        <p class="resume-section-title">Experience</p>
+        ${r.experienceHtml || `<p>${escapeHtml(d.experience)}</p>`}
+      </div>` : ''}
+      ${r.educationText || d.education ? `<div class="resume-section">
+        <p class="resume-section-title">Education</p>
+        <p>${escapeHtml(r.educationText || d.education)}</p>
+      </div>` : ''}
+      ${r.projectsText || d.projects ? `<div class="resume-section">
+        <p class="resume-section-title">Projects</p>
+        <p>${escapeHtml(r.projectsText || d.projects)}</p>
+      </div>` : ''}
+      ${r.certsText || d.certs ? `<div class="resume-section">
+        <p class="resume-section-title">Certifications & Awards</p>
+        <p>${escapeHtml(r.certsText || d.certs)}</p>
+      </div>` : ''}
+    </div>`;
+  document.getElementById('resume-output').innerHTML = html;
+}
+
+function renderLinkedIn(li) {
+  const score = li.score || 50;
+  const circumference = 2 * Math.PI * 26;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#10b981' : score >= 40 ? '#f97316' : '#ef4444';
+
+  let html = `
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="${color}" stroke-width="6"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+        </svg>
+        <div class="score-number">${score}</div>
+      </div>
+      <div>
+        <div class="score-label">LinkedIn Strength: ${li.scoreLabel || 'Needs Work'}</div>
+        <div class="score-sub">Based on profile completeness and optimisation</div>
+      </div>
+    </div>`;
+
+  for (const s of (li.sections || [])) {
+    const statusClass = s.status === 'missing' ? 'status-missing' : s.status === 'improve' ? 'status-improve' : 'status-good';
+    const statusText = s.status === 'missing' ? '⚠ Missing' : s.status === 'improve' ? '↑ Can Improve' : '✓ Good';
+    html += `
+      <div class="li-section">
+        <div class="li-section-header">
+          <div class="li-icon" style="font-size:1.3rem">${s.icon}</div>
+          <div style="flex:1">
+            <h3>${escapeHtml(s.title)}</h3>
+            <span class="li-status ${statusClass}">${statusText}</span>
+          </div>
+        </div>
+        <ul class="li-tips">
+          ${(s.tips||[]).map(t=>`<li class="li-tip"><div class="tip-dot"></div><span>${escapeHtml(t)}</span></li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  document.getElementById('linkedin-output').innerHTML = html;
+}
+
+function copyResume() {
+  const card = document.getElementById('resume-card');
+  if (!card) return;
+  const text = card.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = card.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Text', 2000);
+  });
+}
+</script>
+</body>
+</html>
